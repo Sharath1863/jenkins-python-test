@@ -1,11 +1,21 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = "Jenkins Python CI"
+    }
+
     stages {
 
-        stage('Clone Repository') {
+        stage('Show Environment') {
             steps {
-                echo 'Cloning source code from GitHub...'
+                echo "Application: ${APP_NAME}"
+            }
+        }
+
+        stage('Check Python Version') {
+            steps {
+                bat 'python --version'
             }
         }
 
@@ -15,11 +25,20 @@ pipeline {
             }
         }
 
-        stage('Build Status') {
+        stage('List Workspace Files') {
             steps {
-                echo 'Pipeline executed successfully!'
+                bat 'dir'
             }
         }
 
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
     }
 }
