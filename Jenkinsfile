@@ -26,6 +26,7 @@ pipeline {
                 echo 'Creating build artifact...'
 
                 bat '''
+                if exist build rmdir /s /q build
                 mkdir build
                 copy hello.py build\\
                 copy requirements.txt build\\
@@ -41,11 +42,30 @@ pipeline {
             }
         }
 
+        stage('Deploy Application') {
+            steps {
+                echo 'Deploying application from artifact...'
+
+                bat '''
+                if exist deploy rmdir /s /q deploy
+                mkdir deploy
+                '''
+
+                bat 'powershell Expand-Archive -Path build\\app_build.zip -DestinationPath deploy'
+
+                bat '''
+                cd deploy
+                pip install -r requirements.txt
+                python hello.py
+                '''
+            }
+        }
+
     }
 
     post {
         success {
-            echo 'Artifact created and archived successfully!'
+            echo 'CI/CD Pipeline executed successfully!'
         }
     }
 }
