@@ -1,8 +1,8 @@
-print("Webhook test build 2")
+def add(a, b):
+    return a + b
 
-a = 10
-b = 40
 
-print("Addition:", a + b)
-
-print("Build executed successfully!")
+if __name__ == "__main__":
+    print("Hello from Jenkins Python Build")
+    print("Addition:", add(10, 20))
+    print("Build executed successfully!")
