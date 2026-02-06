@@ -1,4 +1,4 @@
-print("Hello from webhooks trigger  Jenkins Python Build")
+print("Webhook test build 2")
 
 a = 10
 b = 40
