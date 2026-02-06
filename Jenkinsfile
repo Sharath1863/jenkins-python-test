@@ -1,22 +1,30 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "jenkins-python-app"
+        CONTAINER_NAME = "jenkins-python-container"
+    }
+
     stages {
 
         stage('Install Dependencies') {
             steps {
+                echo 'Installing dependencies...'
                 bat 'pip install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
+                echo 'Running pytest...'
                 bat 'pytest'
             }
         }
 
         stage('Run Python Script') {
             steps {
+                echo 'Executing application script...'
                 bat 'python hello.py'
             }
         }
@@ -38,25 +46,25 @@ pipeline {
 
         stage('Archive Artifact') {
             steps {
+                echo 'Archiving artifact...'
                 archiveArtifacts artifacts: 'build/app_build.zip', fingerprint: true
             }
         }
 
-        stage('Deploy Application') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Deploying application from artifact...'
+                echo 'Building Docker image...'
+                bat 'docker build -t %IMAGE_NAME% .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                echo 'Running Docker container...'
 
                 bat '''
-                if exist deploy rmdir /s /q deploy
-                mkdir deploy
-                '''
-
-                bat 'powershell Expand-Archive -Path build\\app_build.zip -DestinationPath deploy'
-
-                bat '''
-                cd deploy
-                pip install -r requirements.txt
-                python hello.py
+                docker rm -f %CONTAINER_NAME% || exit 0
+                docker run --name %CONTAINER_NAME% %IMAGE_NAME%
                 '''
             }
         }
@@ -65,7 +73,13 @@ pipeline {
 
     post {
         success {
-            echo 'CI/CD Pipeline executed successfully!'
+            echo 'CI/CD Docker Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+        always {
+            echo 'Pipeline execution finished.'
         }
     }
 }
