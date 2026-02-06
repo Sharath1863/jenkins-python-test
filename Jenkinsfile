@@ -58,6 +58,21 @@ pipeline {
             }
         }
 
+        stage('Tag Docker Image') {
+            steps {
+                echo 'Tagging Docker image...'
+                bat 'docker tag %IMAGE_NAME% sharath2003/%IMAGE_NAME%'
+            }
+        }
+
+         stage('Push Docker Image') {
+            steps {
+                echo 'Pushing image to Docker Hub...'
+                bat 'docker push sharath2003/%IMAGE_NAME%'
+            }
+        }
+
+
         stage('Run Docker Container') {
             steps {
                 echo 'Running Docker container...'
