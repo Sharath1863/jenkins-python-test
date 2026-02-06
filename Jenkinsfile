@@ -23,19 +23,28 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing dependencies (if any)...'
-                bat 'pip install -r requirements.txt || echo No requirements file'
+                echo 'Installing dependencies...'
+                bat 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo 'Running pytest...'
+                bat 'pytest'
             }
         }
 
         stage('Run Python Script') {
             steps {
+                echo 'Executing application script...'
                 bat 'python hello.py'
             }
         }
 
         stage('List Workspace Files') {
             steps {
+                echo 'Listing workspace files...'
                 bat 'dir'
             }
         }
