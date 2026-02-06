@@ -4,5 +4,5 @@ def add(a, b):
 
 if __name__ == "__main__":
     print("Hello from Jenkins Python Build")
-    print("Addition:", add(10/ 20))
+    print("Addition:", add(10/20))
     print("Build executed successfully!")
