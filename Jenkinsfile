@@ -5,6 +5,7 @@ pipeline {
         IMAGE_NAME = "jenkins-python-app"
         DOCKER_USER = "sharath2003"
         CONTAINER_NAME = "jenkins-python-container"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -44,7 +45,7 @@ pipeline {
                     usernameVariable: 'DOCKER_USERNAME',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    bat 'docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%'
+                        bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin'
                 }
             }
         }
@@ -52,14 +53,16 @@ pipeline {
         stage('Tag Docker Image') {
             steps {
                 echo 'Tagging Docker image...'
-                bat 'docker tag %IMAGE_NAME% %DOCKER_USER%/%IMAGE_NAME%'
+                bat 'docker tag %IMAGE_NAME% %DOCKER_USER%/%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'docker tag %IMAGE_NAME% %DOCKER_USER%/%IMAGE_NAME%:latest'
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 echo 'Pushing image to Docker Hub...'
-                bat 'docker push %DOCKER_USER%/%IMAGE_NAME%'
+                bat 'docker push %DOCKER_USER%/%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'docker push %DOCKER_USER%/%IMAGE_NAME%:latest'
             }
         }
 
