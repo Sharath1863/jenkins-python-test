@@ -5,35 +5,32 @@ pipeline {
         IMAGE_NAME = "jenkins-python-app"
         DOCKER_USER = "sharath2003"
         CONTAINER_NAME = "jenkins-python-container"
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
+
         stage('Install Dependencies') {
             steps {
                 echo 'Installing dependencies...'
-                bat 'pip install -r requirements.txt'
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
                 echo 'Running pytest...'
-                bat 'pytest'
-            }
-        }
-
-        stage('Run Python Script') {
-            steps {
-                echo 'Executing application script...'
-                bat 'python hello.py'
+                sh 'pytest'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                bat 'docker build -t %IMAGE_NAME% .'
+                sh """
+                docker build -t ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} .
+                docker tag ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_USER}/${IMAGE_NAME}:latest
+                """
             }
         }
 
@@ -41,51 +38,46 @@ pipeline {
             steps {
                 echo 'Logging into Docker Hub...'
                 withCredentials([usernamePassword(
-                    credentialsId: '3151dacb-ae2c-4e95-b749-55dff8ad0643',
+                    credentialsId: 'dockerhub-creds',
                     usernameVariable: 'DOCKER_USERNAME',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                        bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin'
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                 }
-            }
-        }
-
-        stage('Tag Docker Image') {
-            steps {
-                echo 'Tagging Docker image...'
-                bat 'docker tag %IMAGE_NAME% %DOCKER_USER%/%IMAGE_NAME%:%IMAGE_TAG%'
-                bat 'docker tag %IMAGE_NAME% %DOCKER_USER%/%IMAGE_NAME%:latest'
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 echo 'Pushing image to Docker Hub...'
-                bat 'docker push %DOCKER_USER%/%IMAGE_NAME%:%IMAGE_TAG%'
-                bat 'docker push %DOCKER_USER%/%IMAGE_NAME%:latest'
+                sh """
+                docker push ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
+                docker push ${DOCKER_USER}/${IMAGE_NAME}:latest
+                """
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Deploy Web Container') {
             steps {
-                echo 'Running Docker container...'
-                bat '''
-                docker rm -f %CONTAINER_NAME% || exit 0
-                docker run --name %CONTAINER_NAME% %IMAGE_NAME%
-                '''
+                echo 'Deploying web application container...'
+                sh """
+                docker rm -f ${CONTAINER_NAME} || true
+                docker run -d -p 5000:5000 --name ${CONTAINER_NAME} \
+                ${DOCKER_USER}/${IMAGE_NAME}:latest
+                """
             }
         }
     }
 
     post {
         success {
-            echo 'Docker CI/CD Pipeline executed successfully!'
+            echo '✅ Docker CI/CD Pipeline executed successfully!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed!'
         }
         always {
-            echo 'Pipeline execution finished.'
+            echo '🔁 Pipeline execution finished.'
         }
     }
 }
