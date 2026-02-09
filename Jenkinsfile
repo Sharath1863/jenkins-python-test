@@ -8,13 +8,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
-            steps {
-                // Pull code from Git
-                git 'https://github.com/Sharath1863/jenkins-python-test.git'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t $IMAGE_NAME ."
