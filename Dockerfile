@@ -1,10 +1,17 @@
+# Use official Python image
 FROM python:3.10-slim
 
+# Set working directory
 WORKDIR /app
 
-COPY hello.py .
-COPY requirements.txt .
+# Copy files
+COPY . .
 
-RUN pip install -r requirements.txt
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python" ,"hello.py"]
+# Expose port
+EXPOSE 5000
+
+# Run app
+CMD ["python", "app.py"]
