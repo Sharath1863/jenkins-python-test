@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     IMAGE_NAME = "sharath2003/my-python-app"
     IMAGE_TAG = "${BUILD_NUMBER}"
@@ -9,7 +8,6 @@ environment {
 }
 
 stages {
-
     stage('Build Docker Image') {
         steps {
             sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
@@ -23,10 +21,7 @@ stages {
                 usernameVariable: 'DOCKER_USER',
                 passwordVariable: 'DOCKER_PASS'
             )]) {
-                sh """
-                echo $DOCKER_PASS | docker login \
-                -u $DOCKER_USER --password-stdin
-                """
+                sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
             }
         }
     }
@@ -56,6 +51,5 @@ stages {
         }
     }
 }
-```
 
 }
