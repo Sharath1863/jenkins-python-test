@@ -8,6 +8,7 @@ environment {
 }
 
 stages {
+
     stage('Build Docker Image') {
         steps {
             sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
@@ -32,24 +33,49 @@ stages {
         }
     }
 
-    stage('Stop Old Container') {
+    stage('Deploy New Version') {
         steps {
             sh """
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
-            """
-        }
-    }
-
-    stage('Run New Container') {
-        steps {
-            sh """
             docker run -d -p 5000:5000 \
             --name $CONTAINER_NAME \
             $IMAGE_NAME:$IMAGE_TAG
             """
         }
     }
+
+    stage('Health Check') {
+        steps {
+            script {
+                sleep 10
+                def status = sh(
+                    script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:5000/health",
+                    returnStdout: true
+                ).trim()
+
+                if (status != "200") {
+                    error "Health check failed!"
+                }
+            }
+        }
+    }
 }
 
+post {
+    failure {
+        script {
+            echo "Deployment failed — rolling back..."
+
+            def previousTag = IMAGE_TAG.toInteger() - 1
+
+            sh """
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d -p 5000:5000 \
+            --name $CONTAINER_NAME \
+            $IMAGE_NAME:$previousTag
+            """
+        }
+    }
 }
